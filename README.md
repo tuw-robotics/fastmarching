@@ -62,26 +62,20 @@ Go into the HTML folder and open index.html
 
 This code uses C\++11 so a compiler g++ 4.8 or equivalent is required. With GCC 4.7 some runtime problems can occur.
 
-### Linking CImg dependencies.
-If you want to compile code that uses the CImg library, you will need to add the following line to the CMakeLists.txt
+Additional dependencies:
 
-    target_link_libraries (fmm X11 pthread)
+    sudo apt-get install imagemagick libboost-all-dev
+    sudo apt-get install 
 
 The code provides a copy of the CImg library. This will take care of loading and savig images. Depending on the extension used, you will need to install another libraries as said in the main page of CImg: http://cimg.sourceforge.net/
-
-The example code uses png, therefore examples of libraries to be installed are libpng, Magick++, ImageMagick, etc.
-
-### Boost dependencies
-When using Ubuntu, you should install Boost libraries (tested with 1.55+):
-
-    sudo apt-get install libboost-all-dev
 
 ## Building the code
 To build the code:
 
     $ cd build
     $ cmake .. -DCMAKE_BUILD_TYPE=Release (Release, RelWithDebInf or Debug, Release by default)
-    $ make
+    $ make -j8 (or the number of cores you want to use during compilation)
+    $ sudo make install (only if you want to install the library)
     $ ./fmm -map1 ../data/testimg.png -map2 ../data/map.png -vel ../data/velocities.png
 
 This main shows most of the utilities implemented so far.
