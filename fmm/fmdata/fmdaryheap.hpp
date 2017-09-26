@@ -25,10 +25,10 @@
 #include "fmcompare.hpp"
 
 /// \note for memory efficiency, use map instead of vector for handles_.
-template <class cell_t = FMCell> class FMDaryHeap {
+template <class cell_t = FMCell, class comp_t = FMCompare<cell_t> > class FMDaryHeap {
 
     /** \brief Shorthand for heap type. */
-    typedef boost::heap::d_ary_heap<const cell_t *, boost::heap::mutable_<true>, boost::heap::arity<2>, boost::heap::compare<FMCompare<cell_t>> > d_ary_heap_t;
+    typedef boost::heap::d_ary_heap<const cell_t *, boost::heap::mutable_<true>, boost::heap::arity<2>, boost::heap::compare<comp_t> > d_ary_heap_t;
     
     /** \brief Shorthand for heap element handle type. */
     typedef typename d_ary_heap_t::handle_type handle_t;

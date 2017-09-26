@@ -10,6 +10,10 @@
 #include "ndgridmap/ndgridmap.hpp"
 #include "console/console.h"
 #include "fmm/fmm.hpp"
+#include "fmm/fsm.hpp"
+#include "fmm/fim.hpp"
+#include "fmm/gmm.hpp"
+#include "fmm/ufmm.hpp"
 #include "fm2/fm2.hpp"
 #include "fm2/fm2star.hpp"
 #include "fmm/fmdata/fmfibheap.hpp"
@@ -44,19 +48,28 @@ int main(int argc, const char ** argv)
     MapLoader::loadMapFromImg(filename2.c_str(), grid);
 
     std::array<unsigned int, ndims> coords_init, coords_goal;
-    GridPoints::selectMapPoints(grid, coords_init, coords_goal);
+//     GridPoints::selectMapPoints(grid, coords_init, coords_goal);
 
+    coords_init[0] = 11;
+    coords_init[1] = 8;
+    coords_goal[0] = 8;
+    coords_goal[1] = 710;
+    
     vector<unsigned int> init_points;
     unsigned int idx, goal;
     grid.coord2idx(coords_init, idx);
     init_points.push_back(idx);
     grid.coord2idx(coords_goal, goal);
 
-    FMM< nDGridMap<FMCell, ndims> > fmm;
-    fmm.setEnvironment(&grid);
-    fmm.setInitialAndGoalPoints(init_points, goal);
-    fmm.compute();
+    for(size_t i = 0; i < 10; ++i ) {
+        grid.clean();
+        FMM< nDGridMap<FMCell, ndims>, FMPriorityQueue<FMCell> > fmm;
+        fmm.setEnvironment(&grid);
+        fmm.setInitialAndGoalPoints(init_points, goal);
+        fmm.compute();
         cout << "\tElapsed FM time: " << fmm.getTime() << " ms" << endl;
+    }
+        
     console::info("Plotting the results and saving into test_fm.txt");
     GridPlotter::plotArrivalTimes(grid);
     GridWriter::saveGridValues("test_fm.txt", grid);

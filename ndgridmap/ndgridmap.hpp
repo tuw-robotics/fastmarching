@@ -86,7 +86,11 @@ template <class T, size_t ndims> class nDGridMap {
 
             //Resizing gridmap and initializing with default values.
             cells_.clear();
-            cells_.resize(ncells_, T());
+            cells_.resize(ncells_+1, T());
+	    neighsCache_.clear();
+	    neighsCache_.resize(ncells_+1);
+	    precomputeNeighs();
+	    
 
             // Setting the index_ member of the cells, which a-priori is unknown.
             for (unsigned int i = 0; i < cells_.size(); ++i)
@@ -99,6 +103,12 @@ template <class T, size_t ndims> class nDGridMap {
         (unsigned int idx) {
             return cells_[idx];
         }
+        
+        /** \brief Returns the cell with index idx. */
+        inline const T & operator[]
+        (unsigned int idx) const {
+            return cells_[idx];
+        }
 
         /** \brief Returns the leaf size of the grid. */
         inline double getLeafSize() const { return leafsize_; }
@@ -109,86 +119,70 @@ template <class T, size_t ndims> class nDGridMap {
         inline T & getCell
         (unsigned int idx) {
             return cells_[idx];
-            }
+	}
+            
+	/** \brief Returns the cell with index idx. */
+        inline const T & getCell
+        (unsigned int idx)  const {
+            return cells_[idx];
+	}
 
         /** \brief Returns the size of each dimension. */
-        inline std::array<unsigned int, ndims> getDimSizes() const { return dimsize_;}
+        inline const std::array<unsigned int, ndims>& getDimSizes() const { return dimsize_;}
 
+        
          /** \brief Returns the minimum value of neighbors of cell idx in dimension dim. */
-        double getMinValueInDim
-        (unsigned int idx, unsigned int dim) {
-            n_neighs = 0; // How many neighbors obtained in that dimension.
-            getNeighborsInDim(idx,n_,dim);
-
-            if (n_neighs == 1)
-                return cells_[n_[0]].getValue();
-            else
-                return (cells_[n_[0]].getValue()<cells_[n_[1]].getValue()) ? cells_[n_[0]].getValue() : cells_[n_[1]].getValue();
+        const double getMinValueInDim
+        (const unsigned int& idx, const unsigned int& dim) const {
+//             static const unsigned int* neighsCacheIdxArr0; 
+//             neighsCacheIdxArr0 = &neighsCache_[idx][2*dim];
+            const auto v0 = cells_[/*(*neighsCacheIdxArr0++)*/neighsCache_[idx][2*dim]].getValue();
+            const auto v1 = cells_[/*(*neighsCacheIdxArr0  )*/neighsCache_[idx][2*dim+1]].getValue();
+            return (v0 < v1) ? v0 : v1;
         }
 
         /** \brief Returns number of valid neighbors for cell idx in dimension dim, stored in m. */
-        unsigned int getNumberNeighborsInDim
-        (int idx, std::array<unsigned int, ndims> &m, unsigned int dim)   {
-            n_neighs = 0;
-            getNeighborsInDim(idx,n_,dim);
-            m = n_;
-            return n_neighs;
-        }
+//         unsigned int getNumberNeighborsInDim
+//         (int idx, std::array<unsigned int, ndims> &m, unsigned int dim) const  {
+//             return 2;
+//         }
 
         /** \brief Computes the indices of the 4-connectivity neighbors. As it is based
             on arrays (to improve performance) the number of neighbors found is
             returned since the neighs array will have always the same size. */
-        unsigned int getNeighbors
-        (unsigned int idx, std::array<unsigned int, 2*ndims> & neighs) {
-            n_neighs = 0;
+        const std::array<unsigned int, 2*ndims>& getNeighbors
+        (unsigned int idx ) const {
+            return neighsCache_[idx];
+        }
+        void compNeighbors
+        (unsigned int idx, std::array<unsigned int, 2*ndims> & neighs) const {
             for (unsigned int i = 0; i < ndims; ++i)
                 getNeighborsInDim(idx,neighs,i);
-
-            return n_neighs;
         }
-
+        
+        std::vector<std::array<unsigned int, 2*ndims>> neighsCache_;
+        void precomputeNeighs() {
+	    for ( size_t i  = 0; i <= ncells_; ++i ) {
+		compNeighbors(i, neighsCache_[i]);
+	    }
+	}
+	
         /** \brief Computes the indices of the 4-connectivity neighbors of cell idx in a specified direction dim.
             This function is designed to be used within getNeighbors() or getMinValueInDim()
             since it increments the private member n_neighs and it is only reset in
             those functions. */
-        void getNeighborsInDim
-        (unsigned int idx, std::array<unsigned int, 2*ndims>& neighs, unsigned int dim) {
-            unsigned int c1,c2; // Candidate neighbors in dimension.
-            if (dim == 0) {
-                c1 = idx-1;
-                c2 = idx+1;
-            }
-            else {
-                c1 = idx-d_[dim-1];
-                c2 = idx+d_[dim-1];
-            }
-            // Checking neighbor 1: is in the same n-dimensional slice (row, plane, cube, etc)?
-            if ((c1 >= 0) && (c1/d_[dim] == idx/d_[dim]))
-                neighs[n_neighs++] = c1;
-            // Checking neighbor 2. Full check, not necessary: if >ncells_ then is in another slice.
-            if (c2/d_[dim] == idx/d_[dim])
-                neighs[n_neighs++] = c2;
-        }
-
-        /** \brief Special version (because of neighbors array size) of this function to be used with getMinValueInDim(). */
-        void getNeighborsInDim
-        (unsigned int idx, std::array<unsigned int, 2>& neighs, unsigned int dim) {
-            // Candidate neighbors in dimension.
-            unsigned int c1,c2;
-            if (dim == 0) {
-                c1 = idx-1;
-                c2 = idx+1;
-            }
-            else {
-                c1 = idx-d_[dim-1];
-                c2 = idx+d_[dim-1];
-            }
-            // Checking neighbor 1: is in the same n-dimensional slice (row, plane, cube, etc)?
-            if ((c1 >= 0) && (c1/d_[dim] == idx/d_[dim]))
-                neighs[n_neighs++] = c1;
-            // Checking neighbor 2. Full check, not necessary: if >ncells_ then is in another slice.
-            if (c2/d_[dim] == idx/d_[dim])
-                neighs[n_neighs++] = c2;
+        template<size_t TNeighSize>
+        void getNeighborsInDim (const int _idx, std::array<unsigned int, TNeighSize>& _neighs, const int _dim ) const {
+	    const int&& pmIdx = ( _dim <= 0 ) ? 1 : d_[_dim-1];
+	    const int&& c1    = _idx - pmIdx; 
+	    const int&& c2    = _idx + pmIdx;
+	    const int&  dDim  = d_[_dim];
+            static unsigned int * neigh0Ptr;
+            neigh0Ptr = &_neighs[_dim * 2];
+		
+            if ( (c1 >= 0) && (c1 / dDim == _idx / dDim) ) { *neigh0Ptr = c1; } else { *neigh0Ptr = ncells_; } // Checking neighbor 1.
+            neigh0Ptr++;
+            if                (c2 / dDim == _idx / dDim)   { *neigh0Ptr = c2; } else { *neigh0Ptr = ncells_; }// Checking neighbor 2.
         }
 
         /** \brief Transforms from index to coordinates. */
@@ -258,7 +252,7 @@ template <class T, size_t ndims> class nDGridMap {
         () const {
             double max = 0;
             for (const T & c:cells_) {
-                if (!isinf(c.getValue()) && c.getValue() > max)
+                if (!std::isinf(c.getValue()) && c.getValue() > max)
                     max = c.getValue();
             }
             return max;
@@ -284,6 +278,7 @@ template <class T, size_t ndims> class nDGridMap {
                     c.setDefault();
                 clean_ = true;
             }
+            cells_.back().setClosed();
         }
 
         /** \brief Erases the content of the grid. Must be resized later. */
@@ -334,6 +329,7 @@ template <class T, size_t ndims> class nDGridMap {
                 else
                     ++nObs;
             }
+            --nObs;
             return sum/(ncells_ - nObs);
         }
 

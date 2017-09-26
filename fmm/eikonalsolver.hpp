@@ -36,6 +36,10 @@
 #include "solver.hpp"
 #include "../console/console.h"
 
+
+#include <algorithm>
+#include <iterator>
+
 template <class grid_t>
 class EikonalSolver : public Solver<grid_t>{
 
@@ -45,70 +49,78 @@ class EikonalSolver : public Solver<grid_t>{
 
         /** \brief Solves nD Eikonal equation for cell idx. If heuristics are activated, it will add
             the estimated travel time to goal with current velocity. */
-        virtual double solveEikonal
+        /*const */double/*&*/ solveEikonal
         (const int & idx) {
-            unsigned int a = grid_t::getNDims(); // a parameter of the Eikonal equation.
-            Tvalues_.clear();
-
-            for (unsigned int dim = 0; dim < grid_t::getNDims(); ++dim) {
-                double minTInDim = grid_->getMinValueInDim(idx, dim);
-                if (!isinf(minTInDim) && minTInDim < grid_->getCell(idx).getArrivalTime())
-                    Tvalues_.push_back(minTInDim);
-                else
-                    a -=1;
+	    
+	    const auto& cellI        = grid_->getCell(idx);
+            const auto& cellIArrTime = cellI.getArrivalTime();
+            double* TvalIter_ = &Tvalues_[0];
+            size_t a = 0;// a parameter of the Eikonal equation.
+            for ( size_t dim = 0; dim < grid_t::getNDims(); ++dim, ++TvalIter_ ) {
+                const double& minTInDim = grid_->getMinValueInDim(idx, dim);
+                *TvalIter_ = minTInDim;
+                if ( minTInDim < cellIArrTime ) { a++; }
             }
-
-            if (a == 0)
-                return std::numeric_limits<double>::infinity();
-
+            
+	    
             // Sort the neighbor values to make easy the following code.
             /// \todo given that this sorts a small vector, a n^2 methods could be better. Test it.
-            std::sort(Tvalues_.begin(), Tvalues_.end());
-            double updatedT;
-            for (unsigned i = 1; i <= a; ++i) {
-                updatedT = solveEikonalNDims(idx, i);
-                // If no more dimensions or increasing one dimension will not improve time.
-                if (i == a || (updatedT - Tvalues_[i]) < utils::COMP_MARGIN)
-                    break;
+            std::sort(&Tvalues_[0], &Tvalues_[grid_t::getNDims()]);
+	    
+	    double updatedT_ = std::numeric_limits<double>::infinity();
+            if ( a > 0 ) {
+                scaledT_ = grid_->getLeafSize() / cellI.getVelocity();
+                TvalIter_ = &Tvalues_[0];
+                sumTT_ = (*TvalIter_)*(*TvalIter_);
+                sumT_  = (*TvalIter_++);
+                /*= */solveEikonal1Dim(updatedT_/*cellI*/);
+//                 if ( updatedT_ - (*TvalIter_) < utils::COMP_MARGIN ) { return updatedT_; } // If increasing one dimension will not improve time.
+                scaledTSqr_ = scaledT_*scaledT_;
+                for (size_t i = 2; i <= a; ++i, ++TvalIter_) {
+                    sumTT_ += (*TvalIter_)*(*TvalIter_);
+                    sumT_  += (*TvalIter_);
+                    /*updatedT_ = */solveEikonalNDims(updatedT_,/*cellI, */i);
+                    if ( updatedT_ - (*TvalIter_) < utils::COMP_MARGIN ) { break; } // If increasing one dimension will not improve time.
+                }
             }
-            return updatedT;
+            return updatedT_;
         }
 
+        
     protected:
         /** \brief Solves the Eikonal equation assuming that Tvalues_
             is sorted. */
-        double solveEikonalNDims
-        (unsigned int idx, unsigned int dim) {
+//         template<typename TCellType>
+        /*double */void solveEikonal1Dim
+        (/*const TCellType& cellI*/double& updT) const {
             // Solve for 1 dimension.
-            if (dim == 1)
-                return Tvalues_[0] + grid_->getLeafSize() / grid_->getCell(idx).getVelocity();
-
-            // Solve for any number > 1 of dimensions.
-            double sumT = 0;
-            double sumTT = 0;
-            for (unsigned i = 0; i < dim; ++i) {
-                sumT += Tvalues_[i];
-                sumTT += Tvalues_[i]*Tvalues_[i];
-            }
-
+            updT = Tvalues_[0] + /*grid_->getLeafSize() / cellI.getVelocity()*/scaledT_;
+        }
+// 	template<typename TCellType>
+        /*double */void solveEikonalNDims
+        (/*const TCellType& cellI,*/double& updT, const size_t& dim) const {
             // These a,b,c values are simplified since leafsize^2, which should be present in the three
             // terms but they are cancelled out when solving the quadratic function.
-            double a = dim;
-            double b = -2*sumT;
-            double c = sumTT - grid_->getLeafSize() * grid_->getLeafSize() / (grid_->getCell(idx).getVelocity()*grid_->getCell(idx).getVelocity());
-            double quad_term = b*b - 4*a*c;
+            const double&& aTime2 = 2*dim;
+            const double&& minB   = 2*sumT_;
+            const double&& c      = sumTT_ - scaledTSqr_;
+            const double&& quad_term = minB*minB - 2*aTime2*c;
 
-            if (quad_term < 0)
-                return std::numeric_limits<double>::infinity();
-            else
-                return (-b + sqrt(quad_term))/(2*a);
+            updT = (quad_term >= 0) ? (minB + sqrt(quad_term))/aTime2 : std::numeric_limits<double>::infinity();
+            // for infinity grid_->getLeafSize() * grid_->getLeafSize()/(grid_->getCell(idx).getVelocity()*grid_->getCell(idx).getVelocity()) + Tvalues_[0];
         }
 
         /** \brief Auxiliar vector with values T0,T1...Tn-1 variables in the Discretized Eikonal Equation. */
-        std::vector<double>          Tvalues_;
+        std::array<double, grid_t::getNDims()> Tvalues_;
+//         double* TvalIter_;
+	double sumT_;
+	double sumTT_;
+// 	double updatedT_;
+        double scaledT_;
+        double scaledTSqr_;
 
         /** \brief Auxiliar array which stores the neighbor of each iteration of the computeFM() function. */
-        std::array <unsigned int, 2*grid_t::getNDims()> neighbors_;
+//         std::array <unsigned int, 2*grid_t::getNDims()> neighbors_;
 
         using Solver<grid_t>::grid_;
 };

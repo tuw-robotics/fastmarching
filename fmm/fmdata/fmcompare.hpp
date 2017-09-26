@@ -27,7 +27,17 @@
     [Stack Overflow post](http://stackoverflow.com/a/16706002/2283531). */
 template <class cell_t> struct FMCompare {
     inline bool operator()
-    (const cell_t * c1 , const cell_t * c2) const {
+    (const cell_t * const & c1 , const cell_t * const & c2) const {
+        return c1->getValue() > c2->getValue();
+    }
+};
+
+/** \brief This struct is used a comparator for the heap. Since a minimum-heap
+ i s desired the operation checked is param1 > param2 as seen in this   *
+ [Stack Overflow post](http://stackoverflow.com/a/16706002/2283531). */
+template <class cell_t> struct FMCompareHeur {
+    inline bool operator()
+    (const cell_t * const & c1 , const cell_t * const & c2) const {
         return c1->getTotalValue() > c2->getTotalValue();
     }
 };

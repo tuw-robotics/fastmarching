@@ -41,24 +41,21 @@ class Cell {
 
         Cell(double v, double o = 1) : value_(v), occupancy_(o) {}
 
-        virtual inline void setValue(double v)            {value_ = v;}
-        virtual inline void setOccupancy(double o)        {occupancy_ = o;}
-        virtual std::string type()                        {return std::string("Cell - Basic cell");}
-        virtual inline void setIndex(int i)               {index_ = i;}
+         void setValue    (double v) {value_ = v;}
+         void setOccupancy(bool o)   {occupancy_ = o;}
+         void setIndex    (int i)    {index_ = i;}
+         std::string type()          {return std::string("Cell - Basic cell");}
 
         /** \brief Sets default values for the cell. Concretely, restarts value_ = -1 but
             occupancy_ is not modified. */
-        virtual void setDefault();
+        void setDefault();
+        void setClosed () { occupancy_ = 0; }
 
-        virtual inline double getValue() const             {return value_;}
-        virtual inline double getOccupancy() const         {return occupancy_;}
-        virtual inline unsigned int getIndex() const       {return index_;}
+         const double&       getValue    () const {return value_;}
+         const double&       getOccupancy() const {return occupancy_;}
+         const unsigned int& getIndex    () const {return index_;}
 
-        virtual inline bool isOccupied() const {
-            if (occupancy_ < utils::COMP_MARGIN)
-                return true;
-            return false;
-        }
+         bool isOccupied() const { return occupancy_ < utils::COMP_MARGIN; }
 
     protected:
         /** \brief Value of the cell. */
@@ -67,7 +64,7 @@ class Cell {
         /** \brief Binary occupancy, true means clear, false occupied. */
         double occupancy_;
 
-        /** \briefbIndex within the grid. Useful when used in heaps. */
+        /** \brief Index within the grid. Useful when used in heaps. */
         unsigned int index_;
 };
 

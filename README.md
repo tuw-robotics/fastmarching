@@ -1,37 +1,36 @@
 N-Dimensional Fast Marching Method V1.0
 
+This package is based on the original fastmarching package from [here](https://github.com/jvgomez/fastmarching). This package performed various optimizations on the original pakage that provide a 3x computational speedup.
+
 **Authors:**
- - [Javier V. Gomez](http://jvgomez.github.io) javvgomez _at_ gmail.com 
+ - Javier V. Gomez javvgomez _at_ gmail.com www.javiervgomez.com
  - Jose Pardeiro jose.pardeiro _at_ gmail.com
  - Pablo Gely
+ - George Todoran todorangrg _at_ gmail.com
 
 ## ALGORITHMS
 **Fast Marching Methods:**
-- [FMM](http://jvgomez.github.io/fastmarching/classFMM.html): Fast Marching Method with Binary Queue and Fibonacci Queue (binary by default).
-- [FMM*](http://jvgomez.github.io/fastmarching/classFMMStar.html): FMM with CostToGo heuristics.
-- [SFMM](http://jvgomez.github.io/fastmarching/classSFMM.html): Simplified Fast Marhching Method.
-- [SFMM*](http://jvgomez.github.io/fastmarching/classSFMMStar.html): SFMM with CostToGo heuristics..
+- [FMM](http://javiervgomez.com/fastmarching/classFMM.html): Fast Marching Method with Binary Queue and Fibonacci Queue (binary by default).
+- [FMM*](http://javiervgomez.com/fastmarching/classFMMStar.html): FMM with CostToGo heuristics.
+- [SFMM](http://javiervgomez.com/fastmarching/classSFMM.html): Simplified Fast Marhching Method.
+- [SFMM*](http://javiervgomez.com/fastmarching/classSFMMStar.html): SFMM with CostToGo heuristics..
 
 **O(n) Fast Marching Methods:**
-- [GMM](http://jvgomez.github.io/fastmarching/classGMM.html): Group Marching Method.
-- [UFMM](http://jvgomez.github.io/fastmarching/classUFMM.html): Untidy Fast Marching Method.
-- [FIM](http://jvgomez.github.io/fastmarching/classFIM.html): Fast Iterative Method.
+- [GMM](http://javiervgomez.com/fastmarching/classGMM.html): Group Marching Method.
+- [UFMM](http://javiervgomez.com/fastmarching/classUFMM.html): Untidy Fast Marching Method.
+- [FIM](http://javiervgomez.com/fastmarching/classFIM.html): Fast Iterative Method.
 
 **Fast Sweeping Methods:**
-- [FSM](http://jvgomez.github.io/fastmarching/classFSM.html): Fast Sweeping Method.
-- [LSM](http://jvgomez.github.io/fastmarching/classLSM.html): Lock Sweeping Method.
+- [FSM](http://javiervgomez.com/fastmarching/classFSM.html): Fast Sweeping Method.
+- [LSM](http://javiervgomez.com/fastmarching/classLSM.html): Lock Sweeping Method.
 
 **Other methods:**
-- [DDQM](http://jvgomez.github.io/fastmarching/classDDQM.html): Dynamic Double Queue Method.
+- [DDQM](http://javiervgomez.com/fastmarching/classDDQM.html): Dynamic Double Queue Method.
 
 **Fast Marching Square motion planning algorithms:**
-- [FM2](http://jvgomez.github.io/fastmarching/classFM2.html): Fast Marching Square Method.
-- [FM2*](http://jvgomez.github.io/fastmarching/classFM2Star.html): Fast Marching Square Star FM2 with CostToGo heuristics.
+- [FM2](http://javiervgomez.com/fastmarching/classFM2.html): Fast Marching Square Method.
+- [FM2*](http://javiervgomez.com/fastmarching/classFM2Star.html): Fast Marching Square Star FM2 with CostToGo heuristics.
 
-**ROS**
-
-ROS nodes using this code (tested in the TurtleBot) are provided in a separate repo:
-https://github.com/jpardeiro/fastmarching_node
 
 ## DISCLAIMER and IMPORTANT NOTES
 
@@ -46,7 +45,7 @@ https://github.com/jpardeiro/fastmarching_node
 
 ## Documentation
 
-- [API Reference](jvgomez.github.io/fastmarching/)
+- [API Reference](http://javiervgomez.com/fastmarching/)
 - This README is important as well.
 
 
@@ -82,6 +81,7 @@ To build the code:
     $ cd build
     $ cmake .. -DCMAKE_BUILD_TYPE=Release (Release, RelWithDebInf or Debug, Release by default)
     $ make
+    $ sudo make install
     $ ./fmm -map1 ../data/testimg.png -map2 ../data/map.png -vel ../data/velocities.png
 
 This main shows most of the utilities implemented so far.

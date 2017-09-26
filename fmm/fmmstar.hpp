@@ -58,7 +58,7 @@
 #include "../ndgridmap/ndgridmap.hpp"
 #include "../console/console.h"
 
-template < class grid_t, class heap_t = FMDaryHeap<FMCell> >  class FMMStar : public FMM<grid_t, heap_t> {
+template < class grid_t, class heap_t = FMDaryHeap<FMCell, FMCompareHeur<grid_t> > >  class FMMStar : public FMM<grid_t, heap_t> {
 
     /** \brief Shorthand for base solver. */
     typedef FMM<grid_t, heap_t> FMMBase;

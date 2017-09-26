@@ -24,7 +24,7 @@
 
 #include "fmcompare.hpp"
 
-template <class cell_t = FMCell> class FMPriorityQueue{
+template <class cell_t = FMCell, class comp_t = FMCompare<cell_t> > class FMPriorityQueue{
 
     public:
         FMPriorityQueue () {}
@@ -54,9 +54,9 @@ template <class cell_t = FMCell> class FMPriorityQueue{
         }
 
         /** \brief Pops index of the element with lowest value and removes it from the heap. */ 
-        int popMinIdx
+        const unsigned& popMinIdx
         () {
-            const int idx = heap_.top()->getIndex();
+            const unsigned& idx = heap_.top()->getIndex();
             heap_.pop();
             return idx;
         }
@@ -81,7 +81,7 @@ template <class cell_t = FMCell> class FMPriorityQueue{
 
     protected:
         /** \brief The actual queue for FMCells. */
-        boost::heap::priority_queue<const cell_t *, boost::heap::compare<FMCompare<cell_t> > > heap_;
+        boost::heap::priority_queue<const cell_t *, boost::heap::compare<comp_t > > heap_;
 };
 
 

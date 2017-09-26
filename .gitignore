@@ -7,3 +7,7 @@ doc/html/
 .idea
 *.*user
 build*/
+
+
+# KDevelop
+*kdev*
