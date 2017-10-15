@@ -1,15 +1,11 @@
-cmake_minimum_required (VERSION 2.6) 
-project (FMM) 
+cmake_minimum_required(VERSION 2.8)
+project(FMM)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
-include(FindGperftools.cmake)
-
-
-# Set a default build type for single-configuration
-# CMake generators if no build type is set.
-IF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-   SET(CMAKE_BUILD_TYPE Release)
-ENDIF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+set(FMM_MAJOR_VERSION 0)
+set(FMM_MINOR_VERSION 1)
+set(FMM_PATCH_VERSION 0)
+set(FMM_VERSION
+  ${FMM_MAJOR_VERSION}.${FMM_MINOR_VERSION}.${FMM_PATCH_VERSION})
 
 # Select flags.
 SET(CMAKE_CXX_FLAGS "-std=c++11 -march=native -fPIC -mavx")
@@ -38,59 +34,63 @@ foreach(p LIB BIN INCLUDE CMAKE)
   endif()
 endforeach()
 
-find_package(Gperftools REQUIRED)
 
-# Self-made includes
-include_directories (${FMM_SOURCE_DIR}/console)
-include_directories (${FMM_SOURCE_DIR}/ndgridmap)
-include_directories (${FMM_SOURCE_DIR}/fmm)
-include_directories (${FMM_SOURCE_DIR}/fmm/fmdata) 
-include_directories (${FMM_SOURCE_DIR}/fm2)
-include_directories (${FMM_SOURCE_DIR}/io)
-include_directories (${FMM_SOURCE_DIR}/gradientdescent)
-
-
-# Third party internal includes
-include_directories (${FMM_SOURCE_DIR}/thirdparty) 
+# set up include-directories
+include_directories(
+  ${PROJECT_SOURCE_DIR}/console
+  ${PROJECT_BINARY_DIR}/ndgridmap
+  ${PROJECT_BINARY_DIR}/fmm
+  ${PROJECT_BINARY_DIR}/fmm/fmdata 
+  ${PROJECT_BINARY_DIR}/fm2
+  ${PROJECT_BINARY_DIR}/io
+  ${PROJECT_BINARY_DIR}/gradientdescent)
 
 
-# External dependencies
-include_directories (~/boost_1_55_0)
-
-add_library(fmmlib console/console.cpp
+add_library(fmm SHARED console/console.cpp
                     ndgridmap/cell.cpp
                     fmm/fmdata/fmcell.cpp)
+                    
+target_link_libraries (fmm X11 pthread ) 
 
-add_executable (fmm main.cpp
-                    console/console.cpp
-                    ndgridmap/cell.cpp
-                    fmm/fmdata/fmcell.cpp
-                    ) 
+SET(FMM_INCLUDE_DIRECTORIES
+  console
+  ndgridmap
+  fmm 
+  fm2
+  io
+  gradientdescent)
 
-# Linking CImg dependencies.
-target_link_libraries (fmm X11 pthread -lprofiler) 
-target_link_libraries (fmmlib X11 pthread ) 
-
-# install(TARGETS
-#   fmm
-#   DESTINATION ${FMM_SOURCE_DIR}/build/bin
-#   LIBRARY DESTINATION ${FMM_SOURCE_DIR}/build/lib
-# )
-# 
-# install(DIRECTORY fmm/ ndgridmap/
-#   DESTINATION ${FMM_SOURCE_DIR}/build/include
-#   PATTERN ".svn" EXCLUDE
-# )
+INSTALL( DIRECTORY ${FMM_INCLUDE_DIRECTORIES} DESTINATION ${INSTALL_INCLUDE_DIR} )
+  
+install(TARGETS fmm
+  # IMPORTANT: Add the foo library to the "export-set"
+  EXPORT FMMTargets
+  RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib
+  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib
+  PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/fmm"
+    COMPONENT dev)
+    
+add_executable (fmm_demo main.cpp) 
+target_link_libraries (fmm_demo fmm X11 pthread) 
+  
+install(TARGETS fmm_demo
+  # IMPORTANT: Add the fmm_demo executable to the "export-set"
+  EXPORT FMMTargets
+  RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin)
+  
+# The interesting stuff goes here
+# ===============================
 
 # Add all targets to the build-tree export set
-export(TARGETS fmm fmmlib
+export(TARGETS fmm_demo fmm
   FILE "${PROJECT_BINARY_DIR}/FMMTargets.cmake")
- 
+
 # Export the package for use from the build-tree
 # (this registers the build-tree with a global CMake-registry)
 export(PACKAGE FMM)
- 
-# Create the FooBarConfig.cmake and FooBarConfigVersion files
+
+# Create the FMMConfig.cmake and FMMConfigVersion files
 file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}"
    "${INSTALL_INCLUDE_DIR}")
 # ... for the build tree
@@ -104,13 +104,13 @@ configure_file(FMMConfig.cmake.in
 # ... for both
 configure_file(FMMConfigVersion.cmake.in
   "${PROJECT_BINARY_DIR}/FMMConfigVersion.cmake" @ONLY)
- 
-# Install the FooBarConfig.cmake and FooBarConfigVersion.cmake
+
+# Install the FMMConfig.cmake and FMMConfigVersion.cmake
 install(FILES
   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/FMMConfig.cmake"
   "${PROJECT_BINARY_DIR}/FMMConfigVersion.cmake"
   DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
- 
+
 # Install the export set for use with the install-tree
 install(EXPORT FMMTargets DESTINATION
   "${INSTALL_CMAKE_DIR}" COMPONENT dev)
