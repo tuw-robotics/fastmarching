@@ -21,7 +21,7 @@ set(INSTALL_INCLUDE_DIR include CACHE PATH
 if(WIN32 AND NOT CYGWIN)
   set(DEF_INSTALL_CMAKE_DIR CMake)
 else()
-  set(DEF_INSTALL_CMAKE_DIR lib/CMake/FMM)
+  set(DEF_INSTALL_CMAKE_DIR share/FMM)
 endif()
 set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
   "Installation directory for CMake files")
@@ -33,18 +33,6 @@ foreach(p LIB BIN INCLUDE CMAKE)
     set(${var} "${CMAKE_INSTALL_PREFIX}/${${var}}")
   endif()
 endforeach()
-
-
-# set up include-directories
-include_directories(
-  ${PROJECT_SOURCE_DIR}/console
-  ${PROJECT_BINARY_DIR}/ndgridmap
-  ${PROJECT_BINARY_DIR}/fmm
-  ${PROJECT_BINARY_DIR}/fmm/fmdata 
-  ${PROJECT_BINARY_DIR}/fm2
-  ${PROJECT_BINARY_DIR}/io
-  ${PROJECT_BINARY_DIR}/gradientdescent)
-
 
 add_library(fmm SHARED console/console.cpp
                     ndgridmap/cell.cpp
@@ -58,7 +46,8 @@ SET(FMM_INCLUDE_DIRECTORIES
   fmm 
   fm2
   io
-  gradientdescent)
+  gradientdescent
+  utils)
 
 INSTALL( DIRECTORY ${FMM_INCLUDE_DIRECTORIES} DESTINATION ${INSTALL_INCLUDE_DIR} )
   
